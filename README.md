@@ -48,6 +48,7 @@ Certifique-se de ter o Python instalado em sua máquina.
    ```bash
    pip install matplotlib
 4. Execute o script principal: 
+   ```bash
    python orbitalwatch_math.py
 
 ## 👥 Integrantes da Equipe
