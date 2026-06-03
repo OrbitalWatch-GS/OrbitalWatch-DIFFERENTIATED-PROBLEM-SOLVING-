@@ -7,7 +7,7 @@
 
 ## 📄 Documentação da Entrega
 
-🔗 **[CLIQUE AQUI PARA ACESSAR O PDF DO PROJETO](https://docs.google.com/document/d/1IB6NTPzQjGnXV3Nd6UhciU5PkISMC9t7dsBBKPuXklA/edit?usp=sharing)**
+🔗 **[CLIQUE AQUI PARA ACESSAR O PDF DO PROJETO](https://docs.google.com/document/d/1X_8GyGPNKpN-kr9EgXLUoC9ziZDoIQWyRiGQqJ8f400/edit?usp=sharing)**
 
 ---
 
