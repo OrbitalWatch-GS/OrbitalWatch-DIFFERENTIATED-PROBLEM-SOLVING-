@@ -12,63 +12,61 @@
 
 import math
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 
 
 def crescimento_detritos(t):
     """
-    Função Exponencial: modela o crescimento de detritos orbitais.
+    Função Exponencial CRESCENTE: modela o crescimento de detritos orbitais.
 
-    D(t) = 28.000 * (1,07)^t
+    D(t) = 40.000 * (1,07)^t
 
     Onde:
-      D(t) = quantidade de detritos no ano t
-      28.000 = quantidade inicial (base: dados NASA 2024)
+      D(t) = quantidade de objetos rastreados no ano t
+      40.000 = quantidade inicial (base: ESA Space Environment Report 2025)
       1,07   = taxa de crescimento de 7% ao ano
-      t      = anos a partir de 2024
+      t      = anos a partir de 2025
 
     Domínio: t >= 0 (anos futuros)
-    Comportamento: crescente, pois base > 1
+    Imagem: D(t) >= 40.000
+    Comportamento: CRESCENTE, pois a base (1,07) é maior que 1.
     """
-    D0 = 28000       # detritos rastreados em 2024 (valor inicial)
+    D0 = 40000       # objetos rastreados em 2025 (valor inicial - ESA 2025)
     taxa = 1.07      # crescimento de 7% ao ano
     return D0 * (taxa ** t)
 
 
 def probabilidade_colisao(d):
     """
-    Função de 2º Grau: modela a probabilidade de colisão (%)
-    em função da distância do detrito ao satélite (em km).
+    Função Exponencial DECRESCENTE: modela a probabilidade de colisão (%)
+    em função da distância (km) entre o detrito e o satélite.
 
-    P(d) = -0,004 * d² + 2 * d
+    P(d) = 100 * e^(-d / 80)
 
     Onde:
-      P(d) = probabilidade de colisão (%)
+      P(d) = probabilidade (índice) de colisão, de 0% a 100%
       d    = distância do detrito ao satélite (km)
+      80   = constante que controla a velocidade de queda do risco
 
-    Vértice (ponto de máximo risco):
-      d_v = -b / (2a) = -2 / (2 * -0,004) = 250 km
-      P_v = 250% → normalizado para escala 0-100%
+    Interpretação física (por que é decrescente):
+      - Quanto MENOR a distância, MAIOR o risco. Em d = 0 (contato
+        iminente) o risco é máximo: P(0) = 100%.
+      - Quanto MAIOR a distância, MENOR o risco, tendendo a zero.
 
-    Domínio relevante: 0 < d < 500 km
-    Raízes: d = 0 e d = 500 (onde o risco é zero)
-    Comportamento: parábola com concavidade negativa (a < 0)
-                   risco máximo na distância de 250 km do cone de impacto
+    Domínio: d >= 0 (distância não pode ser negativa)
+    Imagem: 0 < P(d) <= 100
+    Comportamento: DECRESCENTE em todo o domínio.
+    Assíntota horizontal: P(d) -> 0 quando d -> infinito
+                          (o risco tende a zero, mas nunca é exatamente zero).
     """
-    # Forma canônica com vértice em (250, 100):
-    # P(d) = -(100/250²) · (d - 250)² + 100
-    # Expandida: P(d) = -0,0016d² + 0,8d
-    a = -0.0016
-    resultado = a * (d - 250) ** 2 + 100
-    return max(0.0, min(100.0, resultado))
+    K = 80.0
+    return 100 * math.exp(-d / K)
 
 
 def classificar_risco(prob):
     """
     Classifica o nível de risco com base na probabilidade de colisão.
-    Usa match-case, estrutura ensinada em aula.
+    Usa if-elif-else para definir a faixa e match-case para a etiqueta.
     """
-    faixa = 0
     if prob >= 75:
         faixa = 4
     elif prob >= 50:
@@ -77,6 +75,8 @@ def classificar_risco(prob):
         faixa = 2
     elif prob > 0:
         faixa = 1
+    else:
+        faixa = 0
 
     match faixa:
         case 4:
@@ -92,10 +92,7 @@ def classificar_risco(prob):
 
 
 def calcular_projecao_detritos(anos):
-    """
-    Recebe uma lista de anos e retorna uma lista com
-    a projeção de detritos para cada ano.
-    """
+    """Recebe uma lista de anos e retorna a projeção de detritos para cada um."""
     projecoes = []
     for t in anos:
         valor = crescimento_detritos(t)
@@ -104,10 +101,7 @@ def calcular_projecao_detritos(anos):
 
 
 def calcular_risco_por_distancias(distancias):
-    """
-    Recebe uma lista de distâncias (km) e retorna
-    uma lista com a probabilidade de colisão de cada uma.
-    """
+    """Recebe uma lista de distâncias (km) e retorna a probabilidade de cada uma."""
     riscos = []
     for d in distancias:
         p = probabilidade_colisao(d)
@@ -115,155 +109,121 @@ def calcular_risco_por_distancias(distancias):
     return riscos
 
 
-
-# GRÁFICO 1 – FUNÇÃO EXPONENCIAL (Crescimento de Detritos)
+# ============================================================
+# GRÁFICO 1 – FUNÇÃO EXPONENCIAL CRESCENTE (Crescimento de Detritos)
+# ============================================================
 
 def gerar_grafico_exponencial():
     anos_t = list(range(0, 31))          # t de 0 a 30 anos
-    anos_labels = [2024 + t for t in anos_t]
+    anos_labels = [2025 + t for t in anos_t]
     detritos = calcular_projecao_detritos(anos_t)
 
     pontos_destaque_t = [0, 5, 10, 20, 30]
-    pontos_destaque_x = [2024 + t for t in pontos_destaque_t]
+    pontos_destaque_x = [2025 + t for t in pontos_destaque_t]
     pontos_destaque_y = [crescimento_detritos(t) for t in pontos_destaque_t]
 
     fig, ax = plt.subplots(figsize=(11, 6))
     fig.patch.set_facecolor("#0a1628")
     ax.set_facecolor("#050d1a")
 
-    # curva principal
     ax.plot(anos_labels, detritos,
-            color="#00d4ff", linewidth=2.5, label="D(t) = 28.000 · (1,07)^t")
-
-    # área sob a curva
+            color="#00d4ff", linewidth=2.5, label="D(t) = 40.000 · (1,07)^t")
     ax.fill_between(anos_labels, detritos, alpha=0.12, color="#00d4ff")
 
-    # pontos de destaque
     ax.scatter(pontos_destaque_x, pontos_destaque_y,
                color="#ff4040", s=70, zorder=5)
     for x, y in zip(pontos_destaque_x, pontos_destaque_y):
-        ax.annotate(f"{y:,.0f}",
-                    xy=(x, y),
-                    xytext=(8, 10),
-                    textcoords="offset points",
-                    color="#ffffff",
-                    fontsize=8.5,
-                    fontweight="bold")
+        ax.annotate(f"{y:,.0f}", xy=(x, y), xytext=(8, 10),
+                    textcoords="offset points", color="#ffffff",
+                    fontsize=8.5, fontweight="bold")
 
-    # linha de alerta (100.000 detritos)
-    ax.axhline(y=100000, color="#ffaa00", linestyle="--",
-               linewidth=1.2, alpha=0.7, label="Limiar crítico: 100.000 detritos")
-
-    # formatação
-    ax.set_title("Projeção de Crescimento de Detritos Orbitais (2024–2054)\n"
-                 "Modelo: Função Exponencial  D(t) = 28.000 · (1,07)^t",
+    ax.set_title("Projeção de Crescimento de Objetos Rastreados (2025–2055)\n"
+                 "Modelo: Função Exponencial Crescente  D(t) = 40.000 · (1,07)^t",
                  color="white", fontsize=13, pad=15)
     ax.set_xlabel("Ano", color="#c8d8f0", fontsize=11)
-    ax.set_ylabel("Quantidade de Detritos Rastreados", color="#c8d8f0", fontsize=11)
+    ax.set_ylabel("Quantidade de Objetos Rastreados", color="#c8d8f0", fontsize=11)
     ax.tick_params(colors="#c8d8f0")
     ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{int(v):,}"))
     for spine in ax.spines.values():
         spine.set_edgecolor("#1a3a6b")
     ax.grid(color="#1a3a6b", linestyle="--", linewidth=0.6, alpha=0.5)
-    ax.legend(facecolor="#0a1628", edgecolor="#2e6db4",
-              labelcolor="white", fontsize=10)
+    ax.legend(facecolor="#0a1628", edgecolor="#2e6db4", labelcolor="white", fontsize=10)
 
-    # anotação da fórmula
     ax.text(0.02, 0.93,
-            "D(t) = 28.000 · (1,07)^t\nBase > 1  →  Função Crescente",
-            transform=ax.transAxes,
-            color="#00d4ff", fontsize=9,
+            "D(t) = 40.000 · (1,07)^t\nBase > 1  →  Função Crescente",
+            transform=ax.transAxes, color="#00d4ff", fontsize=9,
             bbox=dict(boxstyle="round,pad=0.4", facecolor="#0a1628",
                       edgecolor="#2e6db4", alpha=0.85))
 
     plt.tight_layout()
-    plt.savefig("grafico_exponencial.png", dpi=150,
+    plt.savefig("grafico_exponencial_crescente.png", dpi=150,
                 bbox_inches="tight", facecolor=fig.get_facecolor())
     plt.close()
-    print("  ✅ Gráfico 1 gerado: grafico_exponencial.png")
+    print("  ✅ Gráfico 1 gerado: grafico_exponencial_crescente.png")
 
 
-# GRÁFICO 2 – FUNÇÃO DE 2º GRAU (Probabilidade de Colisão)
+# ============================================================
+# GRÁFICO 2 – FUNÇÃO EXPONENCIAL DECRESCENTE (Risco x Distância)
+# ============================================================
 
-def gerar_grafico_2grau():
-    distancias = [d for d in range(0, 501, 5)]
+def gerar_grafico_risco():
+    distancias = [d for d in range(0, 401, 5)]
     probabilidades = calcular_risco_por_distancias(distancias)
 
-    # vértice: d = -b/(2a) = -2/(2*-0.004) = 250 km
-    d_vertice = 250
-    p_vertice = probabilidade_colisao(d_vertice)
-
-    # zonas de risco (cores de fundo)
-    zonas = [
-        (0,   125, "#ff404018"),   # crítico
-        (125, 250, "#ffaa0018"),   # alto
-        (250, 375, "#ffaa0018"),   # alto (simétrico)
-        (375, 500, "#00aa0018"),   # baixo
-    ]
+    # distância de "meia-risco": onde P cai à metade -> d = 80 * ln(2)
+    d_meia = 80 * math.log(2)
 
     fig, ax = plt.subplots(figsize=(11, 6))
     fig.patch.set_facecolor("#0a1628")
     ax.set_facecolor("#050d1a")
 
-    # zonas coloridas
-    ax.axvspan(0,   125, alpha=0.15, color="#ff4040", label="Zona Crítica (>75%)")
-    ax.axvspan(125, 375, alpha=0.08, color="#ffaa00", label="Zona de Atenção (25–75%)")
-    ax.axvspan(375, 500, alpha=0.08, color="#00aa00", label="Zona Segura (<25%)")
+    # faixas de risco coloridas (apenas referência visual)
+    ax.axhspan(75, 100, alpha=0.12, color="#ff4040", label="Zona Crítica (≥ 75%)")
+    ax.axhspan(25, 75, alpha=0.08, color="#ffaa00", label="Zona de Atenção (25–75%)")
+    ax.axhspan(0, 25, alpha=0.08, color="#00aa00", label="Zona Segura (< 25%)")
 
-    # curva
     ax.plot(distancias, probabilidades,
-            color="#00d4ff", linewidth=2.5,
-            label="P(d) = -0,0016d² + 0,8d")
+            color="#00d4ff", linewidth=2.5, label="P(d) = 100 · e^(-d/80)")
 
-    # vértice
-    ax.scatter([d_vertice], [p_vertice],
-               color="#ff4040", s=100, zorder=6)
-    ax.annotate(f"Vértice\n({d_vertice} km, {p_vertice:.1f}%)",
-                xy=(d_vertice, p_vertice),
-                xytext=(-90, -40),
-                textcoords="offset points",
-                color="#ff4040",
-                fontsize=9,
-                fontweight="bold",
+    # ponto de meia-risco
+    ax.scatter([d_meia], [50], color="#ff4040", s=90, zorder=6)
+    ax.annotate(f"Meia-risco\n(d ≈ {d_meia:.1f} km, 50%)",
+                xy=(d_meia, 50), xytext=(40, 30),
+                textcoords="offset points", color="#ff4040",
+                fontsize=9, fontweight="bold",
                 arrowprops=dict(arrowstyle="->", color="#ff4040"))
 
-    # linha de alerta 1:10.000 (limiar do OrbitalWatch)
-    ax.axhline(y=50, color="#ffaa00", linestyle="--",
-               linewidth=1.2, alpha=0.8,
-               label="Limiar de alerta OrbitalWatch (P ≥ 50%)")
-
-    # formatação
     ax.set_title("Probabilidade de Colisão em Função da Distância\n"
-                 "Modelo: Função de 2º Grau  P(d) = -0,0016d² + 0,8d",
+                 "Modelo: Função Exponencial Decrescente  P(d) = 100 · e^(-d/80)",
                  color="white", fontsize=13, pad=15)
     ax.set_xlabel("Distância do Detrito ao Satélite (km)", color="#c8d8f0", fontsize=11)
     ax.set_ylabel("Probabilidade de Colisão (%)", color="#c8d8f0", fontsize=11)
-    ax.set_xlim(0, 500)
-    ax.set_ylim(0, 110)
+    ax.set_xlim(0, 400)
+    ax.set_ylim(0, 105)
     ax.tick_params(colors="#c8d8f0")
     for spine in ax.spines.values():
         spine.set_edgecolor("#1a3a6b")
     ax.grid(color="#1a3a6b", linestyle="--", linewidth=0.6, alpha=0.5)
-    ax.legend(facecolor="#0a1628", edgecolor="#2e6db4",
-              labelcolor="white", fontsize=9, loc="upper right")
+    ax.legend(facecolor="#0a1628", edgecolor="#2e6db4", labelcolor="white",
+              fontsize=9, loc="upper right")
 
-    # fórmula
-    ax.text(0.02, 0.93,
-            "P(d) = -0,0016d² + 0,8d\na < 0  →  Concavidade para baixo\n"
-            "Vértice = ponto de máximo risco",
-            transform=ax.transAxes,
-            color="#00d4ff", fontsize=9,
+    ax.text(0.40, 0.80,
+            "P(d) = 100 · e^(-d/80)\nDecrescente  →  risco cai com a distância\n"
+            "P(0) = 100%  |  P(d) → 0 quando d → ∞",
+            transform=ax.transAxes, color="#00d4ff", fontsize=9,
             bbox=dict(boxstyle="round,pad=0.4", facecolor="#0a1628",
                       edgecolor="#2e6db4", alpha=0.85))
 
     plt.tight_layout()
-    plt.savefig("grafico_2grau.png", dpi=150,
+    plt.savefig("grafico_risco_exponencial.png", dpi=150,
                 bbox_inches="tight", facecolor=fig.get_facecolor())
     plt.close()
-    print("  ✅ Gráfico 2 gerado: grafico_2grau.png")
+    print("  ✅ Gráfico 2 gerado: grafico_risco_exponencial.png")
 
 
+# ============================================================
 # MENU PRINCIPAL
+# ============================================================
 
 def exibir_cabecalho():
     print("=" * 60)
@@ -274,10 +234,9 @@ def exibir_cabecalho():
 
 
 def menu_exponencial():
-    print("\n── FUNÇÃO EXPONENCIAL: Crescimento de Detritos ──")
-    print("   D(t) = 28.000 · (1,07)^t\n")
+    print("\n── FUNÇÃO EXPONENCIAL CRESCENTE: Crescimento de Detritos ──")
+    print("   D(t) = 40.000 · (1,07)^t\n")
 
-    # entrada do usuário
     while True:
         entrada = input("   Digite o número de anos a projetar (ex: 10): ").strip()
         if entrada.isdigit() and int(entrada) > 0:
@@ -289,15 +248,13 @@ def menu_exponencial():
     print(f"   {'Ano':<10} {'t':<8} {'Detritos estimados':>20}")
     print("   " + "-" * 40)
 
-    # lista de anos para calcular
     lista_t = list(range(0, anos_futuro + 1))
     projecoes = calcular_projecao_detritos(lista_t)
 
     for t, valor in zip(lista_t, projecoes):
-        ano = 2024 + t
+        ano = 2025 + t
         print(f"   {ano:<10} {t:<8} {valor:>20,.0f}")
 
-    # análise
     print()
     crescimento_total = projecoes[-1] - projecoes[0]
     fator = projecoes[-1] / projecoes[0]
@@ -307,20 +264,19 @@ def menu_exponencial():
     gerar_grafico_exponencial()
 
 
-def menu_2grau():
-    print("\n── FUNÇÃO DE 2º GRAU: Probabilidade de Colisão ──")
-    print("   P(d) = -0,004d² + 2d")
-    print("   Domínio: 0 a 500 km | Vértice: 250 km\n")
+def menu_risco_distancia():
+    print("\n── FUNÇÃO EXPONENCIAL DECRESCENTE: Risco de Colisão ──")
+    print("   P(d) = 100 · e^(-d/80)")
+    print("   Quanto menor a distância, maior o risco.\n")
 
-    # entrada: lista de distâncias
-    print("   Digite distâncias separadas por vírgula (ex: 50,150,250,400):")
+    print("   Digite distâncias separadas por vírgula (ex: 15,50,120,300):")
     while True:
         entrada = input("   Distâncias (km): ").strip()
         try:
             distancias_input = [float(x.strip()) for x in entrada.split(",")]
-            if all(0 <= d <= 500 for d in distancias_input):
+            if all(d >= 0 for d in distancias_input):
                 break
-            print("   ⚠ Distâncias devem estar entre 0 e 500 km.")
+            print("   ⚠ As distâncias não podem ser negativas.")
         except ValueError:
             print("   ⚠ Formato inválido. Use números separados por vírgula.")
 
@@ -334,29 +290,28 @@ def menu_2grau():
         print(f"   {d:<18.1f} {p:<20.2f} {risco}")
 
     print()
-    # vértice
-    print("   📐 Análise do Vértice (ponto de máximo risco):")
-    print("      d_v = -b / (2a) = -0,8 / (2 × -0,0016) = 250 km")
-    print(f"      P(250) = {probabilidade_colisao(250):.1f}%  →  {classificar_risco(100)}")
+    print("   📐 Análise da função P(d) = 100 · e^(-d/80):")
+    print("      • Domínio: d ≥ 0 (distância não pode ser negativa)")
+    print("      • Imagem: 0 < P(d) ≤ 100")
+    print("      • Comportamento: DECRESCENTE em todo o domínio")
+    print(f"      • P(0) = {probabilidade_colisao(0):.1f}%  → risco máximo no contato iminente")
+    print("      • Assíntota horizontal: P(d) → 0 quando d → ∞")
+    d_meia = 80 * math.log(2)
+    print(f"      • Distância de meia-risco: d = 80·ln(2) ≈ {d_meia:.1f} km (risco cai à metade)")
     print()
-    print("   📐 Raízes da parábola (P = 0):")
-    print("      -0,004d² + 2d = 0")
-    print("      d(-0,004d + 2) = 0")
-    print("      d₁ = 0 km  |  d₂ = 500 km")
-    print()
-    gerar_grafico_2grau()
+    gerar_grafico_risco()
 
 
 def menu_consulta_rapida():
     print("\n── CONSULTA RÁPIDA: Avaliação de Risco por Distância ──\n")
 
     while True:
-        entrada = input("   Digite a distância do detrito (km, entre 0 e 500): ").strip()
+        entrada = input("   Digite a distância do detrito (km): ").strip()
         try:
             d = float(entrada)
-            if 0 <= d <= 500:
+            if d >= 0:
                 break
-            print("   ⚠ Distância deve estar entre 0 e 500 km.")
+            print("   ⚠ A distância não pode ser negativa.")
         except ValueError:
             print("   ⚠ Digite um número válido.")
 
@@ -369,7 +324,6 @@ def menu_consulta_rapida():
     print(f"   │  P(d):           {p:.2f}%")
     print(f"   │  Classificação:  {risco}")
 
-    # recomendação com match-case
     match risco:
         case "🔴 CRÍTICO":
             rec = "Acionar protocolo de manobra imediatamente."
@@ -388,15 +342,15 @@ def menu_consulta_rapida():
 
 
 def menu_projecao_frota():
-    print("\n── PROJEÇÃO DE RISCO PARA FROTA DE SATÉLITES ──\n")
+    print("\n── ANÁLISE DE RISCO PARA FROTA DE SATÉLITES ──\n")
 
-    # lista de satélites com distâncias simuladas
+    # frota de exemplo com distâncias que cobrem todos os níveis de risco
     frota = [
-        ("SAT-ORBITAL-01", 80),
-        ("SAT-ORBITAL-02", 210),
-        ("SAT-ORBITAL-03", 340),
-        ("SAT-ORBITAL-04", 450),
-        ("SAT-ORBITAL-05", 120),
+        ("SAT-ORBITAL-01", 15),
+        ("SAT-ORBITAL-02", 50),
+        ("SAT-ORBITAL-03", 95),
+        ("SAT-ORBITAL-04", 160),
+        ("SAT-ORBITAL-05", 280),
     ]
 
     print(f"   {'Satélite':<20} {'Distância (km)':<18} {'Risco (%)':<14} {'Status'}")
@@ -412,7 +366,7 @@ def menu_projecao_frota():
 
     print()
     if criticos:
-        print(f"   ⚠ Satélites em situação crítica ou alta: {len(criticos)}")
+        print(f"   ⚠ Satélites em situação ALTA ou CRÍTICA: {len(criticos)}")
         for s in criticos:
             print(f"      → {s}: manobra de desvio recomendada")
     else:
@@ -425,8 +379,8 @@ def main():
 
     while True:
         print("  Escolha uma opção:")
-        print("  [1] Projeção de crescimento de detritos (Função Exponencial)")
-        print("  [2] Probabilidade de colisão por distância (Função de 2º Grau)")
+        print("  [1] Projeção de crescimento de detritos (Exponencial Crescente)")
+        print("  [2] Risco de colisão por distância (Exponencial Decrescente)")
         print("  [3] Consulta rápida: avaliação de risco de um detrito")
         print("  [4] Análise de risco da frota de satélites")
         print("  [0] Sair")
@@ -438,7 +392,7 @@ def main():
             case "1":
                 menu_exponencial()
             case "2":
-                menu_2grau()
+                menu_risco_distancia()
             case "3":
                 menu_consulta_rapida()
             case "4":
